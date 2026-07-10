@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif; background: #F5F6F8; color: #333; }
+.page { width: 880px; margin: 0 auto; padding: 36px 30px 16px; background: #F5F6F8; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 28px; background: #fff; border-radius: 12px; padding: 24px 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
+.header h1 { font-size: 26px; font-weight: 900; color: #1B3A5C; letter-spacing: 2px; }
+.header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+.header .divider { width: 60px; height: 3px; background: linear-gradient(90deg, #4A7FC4, #5BAF6B); margin: 14px auto 0; border-radius: 2px; }
+
+/* Section */
+.section { margin-bottom: 22px; background: #fff; border-radius: 12px; padding: 22px 26px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.section-num { width: 32px; height: 32px; border-radius: 50%; background: #1B3A5C; color: #fff; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-title { font-size: 18px; font-weight: 700; color: #1B3A5C; }
+
+/* Summary cards */
+.summary-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.summary-card { flex: 1; min-width: 110px; background: #F8F9FB; border-radius: 8px; padding: 10px 14px; border: 1px solid #E8ECF0; text-align: center; }
+.summary-card .label { font-size: 11px; color: #888; margin-bottom: 4px; }
+.summary-card .value { font-size: 18px; font-weight: 700; color: #1B3A5C; }
+.summary-card.highlight { background: #1B3A5C; border-color: #1B3A5C; }
+.summary-card.highlight .label { color: rgba(255,255,255,0.7); }
+.summary-card.highlight .value { color: #fff; }
+
+/* Chart block (consolidated overall) */
+.chart-block { background: #F8F9FB; border-radius: 10px; padding: 14px 22px 18px; border: 1px solid #E8ECF0; }
+.chart-title { font-size: 14px; font-weight: 700; color: #1B3A5C; margin-bottom: 6px; padding-bottom: 8px; border-bottom: 2px solid #E8EFF8; display: flex; align-items: center; gap: 8px; }
+.chart-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+.chart-col-headers { display: grid; grid-template-columns: 36px 130px 1fr 1fr; gap: 12px; padding: 8px 0 10px; font-size: 11px; color: #999; font-weight: 600; align-items: end; }
+.chart-col-headers .col-eff, .chart-col-headers .col-sc { line-height: 1.3; }
+.chart-col-headers .col-eff { color: #4A7FC4; }
+.chart-col-headers .col-sc  { color: #5BAF6B; }
+.chart-col-headers .col-extra { color: #999; }
+
+/* Overall rank row — matches main dashboard: rank + name + bar-cell(eff/sc) all on one line */
+.overall-row { display: grid; grid-template-columns: 36px 130px 1fr 1fr; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #EEE; font-size: 11px; }
+.overall-row:last-child { border-bottom: none; }
+
+/* Rank medal/cell */
+.rank-cell { display: flex; justify-content: center; align-items: center; font-size: 14px; }
+.rank-num { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px; }
+.rank-num.rank-1 { background: #FFF8E1; color: #E8913A; font-size: 13px; }
+.rank-num.rank-2 { background: #F5F5F5; color: #888; font-size: 12px; }
+.rank-num.rank-3 { background: #FFF3E0; color: #C0703A; font-size: 12px; }
+.rank-num.rank-other { background: #F0F0F0; color: #999; }
+
+/* Name cell */
+.name-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.name-cell .bu { font-size: 11px; color: #2c5ba8; font-weight: 700; letter-spacing: 0.5px; }
+.name-cell .nm { font-size: 12px; color: #333; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Bar cell — SINGLE LINE: bar | value (right of bar) | rank-text */
+.bar-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bar-cell .bar-track { flex: 1; height: 12px; background: #F0F0F0; border-radius: 6px; overflow: hidden; min-width: 60px; }
+.bar-cell .bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s; min-width: 2px; }
+.bar-cell .bar-val { font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; min-width: 52px; text-align: left; }
+.bar-cell .bar-rank-txt { font-size: 10px; color: #888; font-variant-numeric: tabular-nums; min-width: 70px; }
+.bar-cell.eff .bar-val { color: #2c5ba8; }
+.bar-cell.sc  .bar-val { color: #2c8a47; }
+
+/* Single-bar section row */
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; height: 28px; }
+.bar-row .bar-rank { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.bar-row .bar-rank.rank-1 { background: #FFF8E1; color: #E8913A; font-size: 13px; }
+.bar-row .bar-rank.rank-2 { background: #F5F5F5; color: #888; font-size: 12px; }
+.bar-row .bar-rank.rank-3 { background: #FFF3E0; color: #C0703A; font-size: 12px; }
+.bar-row .bar-rank.rank-other { background: #F8F8F8; color: #999; }
+.bar-row .bar-name { width: 130px; font-size: 12px; font-weight: 500; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.bar-row .bar-name .bu { color: #2c5ba8; font-weight: 700; margin-right: 4px; }
+.bar-row .bar-track { flex: 1; height: 18px; background: #F0F0F0; border-radius: 9px; overflow: hidden; position: relative; }
+.bar-row .bar-fill { height: 100%; border-radius: 9px; transition: width 0.3s; min-width: 2px; }
+.bar-row .bar-value { width: 80px; text-align: right; font-size: 12px; font-weight: 700; color: #333; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+/* Footer */
+.footer { text-align: center; margin-top: 14px; padding-top: 10px; border-top: 1px solid #E0E4EA; }
+.footer p { font-size: 11px; color: #bbb; }
+</style></head><body>
+<div class="page" id="pageWrapper">
+<div class="header">
+  <h1>招聘效率看板 · 个人排名总览</h1>
+  <div class="subtitle">2026/4/1—2026/6/30 ｜ 2026Q2排名数据</div>
+  <div class="divider"></div>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">国内全职招聘</div>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-card highlight"><div class="label">Q2参与排名</div><div class="value">39人</div></div>
+    <div class="summary-card"><div class="label">人均奖金</div><div class="value">6,078</div></div>
+    <div class="summary-card"><div class="label">人均钱效</div><div class="value">4.09%</div></div>
+    <div class="summary-card"><div class="label">人均积分</div><div class="value">84</div></div>
+  </div>
+<div class="chart-block">
+  <div class="chart-title"><div class="dot" style="background:#4A7FC4"></div>整体排名（钱效/积分各占50%）全部 39 人</div>
+  <div class="chart-col-headers">
+    <div></div>
+    <div class="col-extra">BU / 姓名</div>
+    <div class="col-eff">钱效 / 排名<br><span style="font-weight:400;font-size:10px">（最高 15.18%）</span></div>
+    <div class="col-sc">积分 / 排名<br><span style="font-weight:400;font-size:10px">（最高 208）</span></div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-1">&#x1F947;</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">谢中华</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:46.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">6.98%</span>
+      <span class="bar-rank-txt">钱效排 #4</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">208</span>
+      <span class="bar-rank-txt">积分排 #1</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-2">&#x1F948;</span></div>
+    <div class="name-cell"><span class="bu">HQU</span><span class="nm">孙江婕</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">15.18%</span>
+      <span class="bar-rank-txt">钱效排 #1</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:72.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">150</span>
+      <span class="bar-rank-txt">积分排 #5</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-3">&#x1F949;</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">林冰敏</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:57.1%;background:#4A7FC4"></div></div>
+      <span class="bar-val">8.67%</span>
+      <span class="bar-rank-txt">钱效排 #3</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:77.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">162</span>
+      <span class="bar-rank-txt">积分排 #3</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">4</span></div>
+    <div class="name-cell"><span class="bu">ABU</span><span class="nm">付玉</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:41.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">6.30%</span>
+      <span class="bar-rank-txt">钱效排 #7</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:88.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">185</span>
+      <span class="bar-rank-txt">积分排 #2</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">5</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">林瑞津</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:41.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">6.22%</span>
+      <span class="bar-rank-txt">钱效排 #8</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:72.6%;background:#5BAF6B"></div></div>
+      <span class="bar-val">151</span>
+      <span class="bar-rank-txt">积分排 #4</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">6</span></div>
+    <div class="name-cell"><span class="bu">ABU</span><span class="nm">黎榕洁</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:42.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">6.43%</span>
+      <span class="bar-rank-txt">钱效排 #6</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:56.7%;background:#5BAF6B"></div></div>
+      <span class="bar-val">118</span>
+      <span class="bar-rank-txt">积分排 #9</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">7</span></div>
+    <div class="name-cell"><span class="bu">HQU</span><span class="nm">姜宇琪</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:33.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">5.07%</span>
+      <span class="bar-rank-txt">钱效排 #10</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:67.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">140</span>
+      <span class="bar-rank-txt">积分排 #7</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">8</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">林岱娜</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:31.2%;background:#4A7FC4"></div></div>
+      <span class="bar-val">4.74%</span>
+      <span class="bar-rank-txt">钱效排 #11</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:69.2%;background:#5BAF6B"></div></div>
+      <span class="bar-val">144</span>
+      <span class="bar-rank-txt">积分排 #6</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">9</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">邓蕊</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:34.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">5.22%</span>
+      <span class="bar-rank-txt">钱效排 #9</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:48.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">100</span>
+      <span class="bar-rank-txt">积分排 #12</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">10</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">王越</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:45.8%;background:#4A7FC4"></div></div>
+      <span class="bar-val">6.96%</span>
+      <span class="bar-rank-txt">钱效排 #5</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:40.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">84</span>
+      <span class="bar-rank-txt">积分排 #17</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">11</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">尹远明</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:24.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.72%</span>
+      <span class="bar-rank-txt">钱效排 #16</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:63.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">131</span>
+      <span class="bar-rank-txt">积分排 #8</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">12</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">李姗姗</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:23.3%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.54%</span>
+      <span class="bar-rank-txt">钱效排 #18</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:55.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">115</span>
+      <span class="bar-rank-txt">积分排 #10</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">13</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">刘明慧</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:26.8%;background:#4A7FC4"></div></div>
+      <span class="bar-val">4.08%</span>
+      <span class="bar-rank-txt">钱效排 #14</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:40.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">84</span>
+      <span class="bar-rank-txt">积分排 #16</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">14</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">陈好男</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:61.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">9.34%</span>
+      <span class="bar-rank-txt">钱效排 #2</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:25.5%;background:#5BAF6B"></div></div>
+      <span class="bar-val">53</span>
+      <span class="bar-rank-txt">积分排 #29</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">15</span></div>
+    <div class="name-cell"><span class="bu">ABU</span><span class="nm">陈若鑫</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:29.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">4.47%</span>
+      <span class="bar-rank-txt">钱效排 #13</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:39.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">83</span>
+      <span class="bar-rank-txt">积分排 #18</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">16</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">何欣</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:21.3%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.23%</span>
+      <span class="bar-rank-txt">钱效排 #22</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:45.7%;background:#5BAF6B"></div></div>
+      <span class="bar-val">95</span>
+      <span class="bar-rank-txt">积分排 #14</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">17</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">韦雪芳</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:19.9%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.02%</span>
+      <span class="bar-rank-txt">钱效排 #26</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:54.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">113</span>
+      <span class="bar-rank-txt">积分排 #11</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">18</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">杨爽</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:21.3%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.23%</span>
+      <span class="bar-rank-txt">钱效排 #23</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:41.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">86</span>
+      <span class="bar-rank-txt">积分排 #15</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">19</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">杨照国</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:31.2%;background:#4A7FC4"></div></div>
+      <span class="bar-val">4.74%</span>
+      <span class="bar-rank-txt">钱效排 #12</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:27.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">57</span>
+      <span class="bar-rank-txt">积分排 #27</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">20</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">夏任鹏</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:23.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.49%</span>
+      <span class="bar-rank-txt">钱效排 #19</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:32.7%;background:#5BAF6B"></div></div>
+      <span class="bar-val">68</span>
+      <span class="bar-rank-txt">积分排 #22</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">21</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">宋日峻</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:23.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.49%</span>
+      <span class="bar-rank-txt">钱效排 #20</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:34.6%;background:#5BAF6B"></div></div>
+      <span class="bar-val">72</span>
+      <span class="bar-rank-txt">积分排 #21</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">22</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">张波</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:24.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.64%</span>
+      <span class="bar-rank-txt">钱效排 #17</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:28.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">59</span>
+      <span class="bar-rank-txt">积分排 #26</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">23</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">孟亚楠</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:17.6%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.68%</span>
+      <span class="bar-rank-txt">钱效排 #31</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:47.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">98</span>
+      <span class="bar-rank-txt">积分排 #13</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">24</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">纪潇雨</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:24.7%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.75%</span>
+      <span class="bar-rank-txt">钱效排 #15</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:25.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">52</span>
+      <span class="bar-rank-txt">积分排 #31</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">25</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">李嘉成</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:21.6%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.28%</span>
+      <span class="bar-rank-txt">钱效排 #21</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:29.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">61</span>
+      <span class="bar-rank-txt">积分排 #25</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">26</span></div>
+    <div class="name-cell"><span class="bu">HQU</span><span class="nm">张艳</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:19.8%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.00%</span>
+      <span class="bar-rank-txt">钱效排 #27</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:39.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">82</span>
+      <span class="bar-rank-txt">积分排 #19</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">27</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">刘非凡</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:21.3%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.23%</span>
+      <span class="bar-rank-txt">钱效排 #24</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:31.2%;background:#5BAF6B"></div></div>
+      <span class="bar-val">65</span>
+      <span class="bar-rank-txt">积分排 #23</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">28</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">汪雨婷</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:10.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.59%</span>
+      <span class="bar-rank-txt">钱效排 #35</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:38.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">79</span>
+      <span class="bar-rank-txt">积分排 #20</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">29</span></div>
+    <div class="name-cell"><span class="bu">HQU</span><span class="nm">郭颖</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:21.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.18%</span>
+      <span class="bar-rank-txt">钱效排 #25</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:25.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">52</span>
+      <span class="bar-rank-txt">积分排 #32</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">30</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">叶艳红</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:18.1%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.75%</span>
+      <span class="bar-rank-txt">钱效排 #29</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:26.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">56</span>
+      <span class="bar-rank-txt">积分排 #28</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">31</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">张影</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:13.6%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.07%</span>
+      <span class="bar-rank-txt">钱效排 #33</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:30.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">63</span>
+      <span class="bar-rank-txt">积分排 #24</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">32</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">熊秋英</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:18.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.73%</span>
+      <span class="bar-rank-txt">钱效排 #30</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:25.5%;background:#5BAF6B"></div></div>
+      <span class="bar-val">53</span>
+      <span class="bar-rank-txt">积分排 #30</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">33</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">张晶晶</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:18.7%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.83%</span>
+      <span class="bar-rank-txt">钱效排 #28</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:13.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">27</span>
+      <span class="bar-rank-txt">积分排 #35</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">34</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">吴帆</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:11.7%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.78%</span>
+      <span class="bar-rank-txt">钱效排 #34</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:15.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">32</span>
+      <span class="bar-rank-txt">积分排 #33</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">35</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">王颖</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:14.7%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.24%</span>
+      <span class="bar-rank-txt">钱效排 #32</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:13.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">27</span>
+      <span class="bar-rank-txt">积分排 #36</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">36</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">张聪</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:6.7%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.01%</span>
+      <span class="bar-rank-txt">钱效排 #36</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:13.5%;background:#5BAF6B"></div></div>
+      <span class="bar-val">28</span>
+      <span class="bar-rank-txt">积分排 #34</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">37</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">冯健</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:6.1%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.92%</span>
+      <span class="bar-rank-txt">钱效排 #37</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:10.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">21</span>
+      <span class="bar-rank-txt">积分排 #37</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">38</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">李嘉雯</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:3.7%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.56%</span>
+      <span class="bar-rank-txt">钱效排 #38</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:5.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">11</span>
+      <span class="bar-rank-txt">积分排 #38</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">39</span></div>
+    <div class="name-cell"><span class="bu">LBU</span><span class="nm">范成桃</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.15%</span>
+      <span class="bar-rank-txt">钱效排 #39</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:2.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">6</span>
+      <span class="bar-rank-txt">积分排 #39</span>
+    </div>
+  </div>
+</div></div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">海外全职招聘</div>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-card highlight"><div class="label">Q2参与排名</div><div class="value">22人</div></div>
+    <div class="summary-card"><div class="label">人均奖金</div><div class="value">4,928</div></div>
+    <div class="summary-card"><div class="label">人均钱效</div><div class="value">1.44%</div></div>
+    <div class="summary-card"><div class="label">人均积分</div><div class="value">42</div></div>
+  </div>
+<div class="chart-block">
+  <div class="chart-title"><div class="dot" style="background:#4A7FC4"></div>整体排名（钱效/积分各占50%）全部 22 人</div>
+  <div class="chart-col-headers">
+    <div></div>
+    <div class="col-extra">BU / 姓名</div>
+    <div class="col-eff">钱效 / 排名<br><span style="font-weight:400;font-size:10px">（最高 3.87%）</span></div>
+    <div class="col-sc">积分 / 排名<br><span style="font-weight:400;font-size:10px">（最高 102）</span></div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-1">&#x1F947;</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">Yanchi Zhan</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.87%</span>
+      <span class="bar-rank-txt">钱效排 #1</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">102</span>
+      <span class="bar-rank-txt">积分排 #1</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-2">&#x1F948;</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">Xiaoli Chen</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:92.2%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.56%</span>
+      <span class="bar-rank-txt">钱效排 #3</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:97.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">99</span>
+      <span class="bar-rank-txt">积分排 #2</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-3">&#x1F949;</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">Alexis DEME</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:93.9%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.63%</span>
+      <span class="bar-rank-txt">钱效排 #2</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:70.6%;background:#5BAF6B"></div></div>
+      <span class="bar-val">72</span>
+      <span class="bar-rank-txt">积分排 #7</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">4</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">Xinyue Li</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:85.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.31%</span>
+      <span class="bar-rank-txt">钱效排 #4</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:79.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">81</span>
+      <span class="bar-rank-txt">积分排 #5</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">5</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">Qiwen Yan</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:65.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.53%</span>
+      <span class="bar-rank-txt">钱效排 #6</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:94.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">96</span>
+      <span class="bar-rank-txt">积分排 #3</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">6</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">Guanlin Qian</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:52.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">2.03%</span>
+      <span class="bar-rank-txt">钱效排 #7</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:82.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">84</span>
+      <span class="bar-rank-txt">积分排 #4</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">7</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">Tianle MOU</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:79.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">3.07%</span>
+      <span class="bar-rank-txt">钱效排 #5</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:47.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">48</span>
+      <span class="bar-rank-txt">积分排 #9</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">8</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">Tianshu SHEN</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:46.1%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.78%</span>
+      <span class="bar-rank-txt">钱效排 #8</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:79.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">81</span>
+      <span class="bar-rank-txt">积分排 #6</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">9</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">Yanzi Li</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:34.6%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.34%</span>
+      <span class="bar-rank-txt">钱效排 #11</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:50.0%;background:#5BAF6B"></div></div>
+      <span class="bar-val">51</span>
+      <span class="bar-rank-txt">积分排 #8</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">10</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">Yue Hao</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:36.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.41%</span>
+      <span class="bar-rank-txt">钱效排 #9</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:43.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">44</span>
+      <span class="bar-rank-txt">积分排 #11</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">11</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">Vicky</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:31.7%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.23%</span>
+      <span class="bar-rank-txt">钱效排 #12</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:45.1%;background:#5BAF6B"></div></div>
+      <span class="bar-val">46</span>
+      <span class="bar-rank-txt">积分排 #10</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">12</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">Xiaohan Li</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:35.9%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.39%</span>
+      <span class="bar-rank-txt">钱效排 #10</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:35.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">36</span>
+      <span class="bar-rank-txt">积分排 #13</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">13</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">Vivian/Hsiao Hsuan Chen</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:27.9%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.08%</span>
+      <span class="bar-rank-txt">钱效排 #14</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:35.3%;background:#5BAF6B"></div></div>
+      <span class="bar-val">36</span>
+      <span class="bar-rank-txt">积分排 #12</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">14</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">Yijia Liu</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:29.4%;background:#4A7FC4"></div></div>
+      <span class="bar-val">1.14%</span>
+      <span class="bar-rank-txt">钱效排 #13</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:32.4%;background:#5BAF6B"></div></div>
+      <span class="bar-val">33</span>
+      <span class="bar-rank-txt">积分排 #14</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">15</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">Zihui Cheng</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:2.3%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.09%</span>
+      <span class="bar-rank-txt">钱效排 #16</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:2.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">3</span>
+      <span class="bar-rank-txt">积分排 #16</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">16</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">校振亚</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:2.8%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.11%</span>
+      <span class="bar-rank-txt">钱效排 #15</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:2.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">3</span>
+      <span class="bar-rank-txt">积分排 #18</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">17</span></div>
+    <div class="name-cell"><span class="bu">GEU</span><span class="nm">Mauro Orsini</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.00%</span>
+      <span class="bar-rank-txt">钱效排 #18</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:5.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">6</span>
+      <span class="bar-rank-txt">积分排 #15</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">18</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">王鹏涛Patrick</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.03%</span>
+      <span class="bar-rank-txt">钱效排 #17</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:2.9%;background:#5BAF6B"></div></div>
+      <span class="bar-val">3</span>
+      <span class="bar-rank-txt">积分排 #17</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">19</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">Neumannová Karolína</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.00%</span>
+      <span class="bar-rank-txt">钱效排 #19</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#5BAF6B"></div></div>
+      <span class="bar-val">0</span>
+      <span class="bar-rank-txt">积分排 #19</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">20</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">徐高进</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.00%</span>
+      <span class="bar-rank-txt">钱效排 #20</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#5BAF6B"></div></div>
+      <span class="bar-val">0</span>
+      <span class="bar-rank-txt">积分排 #20</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">21</span></div>
+    <div class="name-cell"><span class="bu">FBU</span><span class="nm">陈雅彤</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.00%</span>
+      <span class="bar-rank-txt">钱效排 #21</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#5BAF6B"></div></div>
+      <span class="bar-val">0</span>
+      <span class="bar-rank-txt">积分排 #21</span>
+    </div>
+  </div>
+  <div class="overall-row">
+    <div class="rank-cell"><span class="rank-num rank-other">22</span></div>
+    <div class="name-cell"><span class="bu">GUS</span><span class="nm">孙文怡Winnie</span></div>
+    <div class="bar-cell eff">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#4A7FC4"></div></div>
+      <span class="bar-val">0.00%</span>
+      <span class="bar-rank-txt">钱效排 #22</span>
+    </div>
+    <div class="bar-cell sc">
+      <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#5BAF6B"></div></div>
+      <span class="bar-val">0</span>
+      <span class="bar-rank-txt">积分排 #22</span>
+    </div>
+  </div>
+</div></div>
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">兼职招聘</div>
+  </div>
+
+  <div class="summary-row">
+    <div class="summary-card highlight"><div class="label">Q2参与排名</div><div class="value">67人</div></div>
+    <div class="summary-card"><div class="label">人均奖金</div><div class="value">1,459</div></div>
+  </div>
+<div class="chart-block">
+  <div class="chart-title"><div class="dot" style="background:#E8913A"></div>Q2应发奖金排名 全部67人</div>
+  <div class="bar-row">
+    <div class="bar-rank rank-1">&#x1F947;</div>
+    <div class="bar-name"><span class="bu">PBU</span>Shiyu Qi</div>
+    <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#E8913A"></div></div>
+    <div class="bar-value">15,168元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-2">&#x1F948;</div>
+    <div class="bar-name"><span class="bu">FBU</span>Jackie</div>
+    <div class="bar-track"><div class="bar-fill" style="width:39.4%;background:#E8913A"></div></div>
+    <div class="bar-value">5,980元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-3">&#x1F949;</div>
+    <div class="bar-name"><span class="bu">FBU</span>CHEN XINZE</div>
+    <div class="bar-track"><div class="bar-fill" style="width:32.9%;background:#E8913A"></div></div>
+    <div class="bar-value">4,986元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">4</div>
+    <div class="bar-name"><span class="bu">FBU</span>RUMIAO,KOHUT</div>
+    <div class="bar-track"><div class="bar-fill" style="width:32.6%;background:#E8913A"></div></div>
+    <div class="bar-value">4,942元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">5</div>
+    <div class="bar-name"><span class="bu">FBU</span>FREJ DAGMARA</div>
+    <div class="bar-track"><div class="bar-fill" style="width:30.6%;background:#E8913A"></div></div>
+    <div class="bar-value">4,637元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">6</div>
+    <div class="bar-name"><span class="bu">ABU</span>彭威</div>
+    <div class="bar-track"><div class="bar-fill" style="width:22.9%;background:#E8913A"></div></div>
+    <div class="bar-value">3,480元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">7</div>
+    <div class="bar-name"><span class="bu">GEU</span>李梦琦Myki</div>
+    <div class="bar-track"><div class="bar-fill" style="width:22.3%;background:#E8913A"></div></div>
+    <div class="bar-value">3,387元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">8</div>
+    <div class="bar-name"><span class="bu">PBU</span>Wei Yan Shirley Lee</div>
+    <div class="bar-track"><div class="bar-fill" style="width:21.4%;background:#E8913A"></div></div>
+    <div class="bar-value">3,253元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">9</div>
+    <div class="bar-name"><span class="bu">FBU</span>Hermione ADJOVI</div>
+    <div class="bar-track"><div class="bar-fill" style="width:20.7%;background:#E8913A"></div></div>
+    <div class="bar-value">3,146元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">10</div>
+    <div class="bar-name"><span class="bu">FBU</span>PENG NANCHUAN</div>
+    <div class="bar-track"><div class="bar-fill" style="width:19.3%;background:#E8913A"></div></div>
+    <div class="bar-value">2,927元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">11</div>
+    <div class="bar-name"><span class="bu">FBU</span>施文</div>
+    <div class="bar-track"><div class="bar-fill" style="width:18.9%;background:#E8913A"></div></div>
+    <div class="bar-value">2,864元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">12</div>
+    <div class="bar-name"><span class="bu">PBU</span>蒋俊杰</div>
+    <div class="bar-track"><div class="bar-fill" style="width:17.5%;background:#E8913A"></div></div>
+    <div class="bar-value">2,655元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">13</div>
+    <div class="bar-name"><span class="bu">GEU</span>刘琪Qi</div>
+    <div class="bar-track"><div class="bar-fill" style="width:16.0%;background:#E8913A"></div></div>
+    <div class="bar-value">2,426元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">14</div>
+    <div class="bar-name"><span class="bu">ABU</span>左娟娟</div>
+    <div class="bar-track"><div class="bar-fill" style="width:15.9%;background:#E8913A"></div></div>
+    <div class="bar-value">2,419元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">15</div>
+    <div class="bar-name"><span class="bu">PBU</span>ZHENG Baiqi</div>
+    <div class="bar-track"><div class="bar-fill" style="width:15.8%;background:#E8913A"></div></div>
+    <div class="bar-value">2,401元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">16</div>
+    <div class="bar-name"><span class="bu">FBU</span>陈俊劼</div>
+    <div class="bar-track"><div class="bar-fill" style="width:15.2%;background:#E8913A"></div></div>
+    <div class="bar-value">2,311元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">17</div>
+    <div class="bar-name"><span class="bu">FBU</span>XIAO XI</div>
+    <div class="bar-track"><div class="bar-fill" style="width:13.1%;background:#E8913A"></div></div>
+    <div class="bar-value">1,993元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">18</div>
+    <div class="bar-name"><span class="bu">GEU</span>陈贵飞Guifei</div>
+    <div class="bar-track"><div class="bar-fill" style="width:12.9%;background:#E8913A"></div></div>
+    <div class="bar-value">1,962元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">19</div>
+    <div class="bar-name"><span class="bu">GEU</span>Siyuan ZANG</div>
+    <div class="bar-track"><div class="bar-fill" style="width:11.0%;background:#E8913A"></div></div>
+    <div class="bar-value">1,664元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">20</div>
+    <div class="bar-name"><span class="bu">GEU</span>Sai Yidan Adili</div>
+    <div class="bar-track"><div class="bar-fill" style="width:10.1%;background:#E8913A"></div></div>
+    <div class="bar-value">1,531元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">21</div>
+    <div class="bar-name"><span class="bu">GUS</span>黄滢</div>
+    <div class="bar-track"><div class="bar-fill" style="width:9.8%;background:#E8913A"></div></div>
+    <div class="bar-value">1,491元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">22</div>
+    <div class="bar-name"><span class="bu">FBU</span>阮家焱</div>
+    <div class="bar-track"><div class="bar-fill" style="width:9.5%;background:#E8913A"></div></div>
+    <div class="bar-value">1,441元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">23</div>
+    <div class="bar-name"><span class="bu">GUS</span>李王阳Sunny</div>
+    <div class="bar-track"><div class="bar-fill" style="width:8.8%;background:#E8913A"></div></div>
+    <div class="bar-value">1,333元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">24</div>
+    <div class="bar-name"><span class="bu">FBU</span>杨圆媛</div>
+    <div class="bar-track"><div class="bar-fill" style="width:8.7%;background:#E8913A"></div></div>
+    <div class="bar-value">1,313元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">25</div>
+    <div class="bar-name"><span class="bu">PBU</span>程凤</div>
+    <div class="bar-track"><div class="bar-fill" style="width:8.5%;background:#E8913A"></div></div>
+    <div class="bar-value">1,290元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">26</div>
+    <div class="bar-name"><span class="bu">FBU</span>LI SHASHA</div>
+    <div class="bar-track"><div class="bar-fill" style="width:6.8%;background:#E8913A"></div></div>
+    <div class="bar-value">1,035元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">27</div>
+    <div class="bar-name"><span class="bu">LBU</span>刘绰如</div>
+    <div class="bar-track"><div class="bar-fill" style="width:6.8%;background:#E8913A"></div></div>
+    <div class="bar-value">1,028元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">28</div>
+    <div class="bar-name"><span class="bu">FBU</span>Frank Wang</div>
+    <div class="bar-track"><div class="bar-fill" style="width:6.6%;background:#E8913A"></div></div>
+    <div class="bar-value">996元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">29</div>
+    <div class="bar-name"><span class="bu">GUS</span>王怡婷</div>
+    <div class="bar-track"><div class="bar-fill" style="width:5.8%;background:#E8913A"></div></div>
+    <div class="bar-value">884元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">30</div>
+    <div class="bar-name"><span class="bu">FBU</span>马可</div>
+    <div class="bar-track"><div class="bar-fill" style="width:5.8%;background:#E8913A"></div></div>
+    <div class="bar-value">874元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">31</div>
+    <div class="bar-name"><span class="bu">FBU</span>Yining Liu</div>
+    <div class="bar-track"><div class="bar-fill" style="width:5.8%;background:#E8913A"></div></div>
+    <div class="bar-value">873元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">32</div>
+    <div class="bar-name"><span class="bu">FBU</span>郝義</div>
+    <div class="bar-track"><div class="bar-fill" style="width:4.7%;background:#E8913A"></div></div>
+    <div class="bar-value">720元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">33</div>
+    <div class="bar-name"><span class="bu">FBU</span>胡馨元</div>
+    <div class="bar-track"><div class="bar-fill" style="width:4.4%;background:#E8913A"></div></div>
+    <div class="bar-value">675元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">34</div>
+    <div class="bar-name"><span class="bu">FBU</span>肖国强</div>
+    <div class="bar-track"><div class="bar-fill" style="width:4.2%;background:#E8913A"></div></div>
+    <div class="bar-value">633元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">35</div>
+    <div class="bar-name"><span class="bu">FBU</span>丘美娇</div>
+    <div class="bar-track"><div class="bar-fill" style="width:4.1%;background:#E8913A"></div></div>
+    <div class="bar-value">622元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">36</div>
+    <div class="bar-name"><span class="bu">FBU</span>WANG NA</div>
+    <div class="bar-track"><div class="bar-fill" style="width:3.9%;background:#E8913A"></div></div>
+    <div class="bar-value">585元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">37</div>
+    <div class="bar-name"><span class="bu">GUS</span>林丽芳</div>
+    <div class="bar-track"><div class="bar-fill" style="width:3.9%;background:#E8913A"></div></div>
+    <div class="bar-value">585元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">38</div>
+    <div class="bar-name"><span class="bu">PBU</span>Yuqing Liu</div>
+    <div class="bar-track"><div class="bar-fill" style="width:3.5%;background:#E8913A"></div></div>
+    <div class="bar-value">538元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">39</div>
+    <div class="bar-name"><span class="bu">FBU</span>Di FARNWALT</div>
+    <div class="bar-track"><div class="bar-fill" style="width:3.4%;background:#E8913A"></div></div>
+    <div class="bar-value">514元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">40</div>
+    <div class="bar-name"><span class="bu">GUS</span>叶秀芳Freya</div>
+    <div class="bar-track"><div class="bar-fill" style="width:3.4%;background:#E8913A"></div></div>
+    <div class="bar-value">514元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">41</div>
+    <div class="bar-name"><span class="bu">PBU</span>Wei Jin</div>
+    <div class="bar-track"><div class="bar-fill" style="width:3.0%;background:#E8913A"></div></div>
+    <div class="bar-value">455元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">42</div>
+    <div class="bar-name"><span class="bu">FBU</span>Meredith Yue Zhang</div>
+    <div class="bar-track"><div class="bar-fill" style="width:2.9%;background:#E8913A"></div></div>
+    <div class="bar-value">447元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">43</div>
+    <div class="bar-name"><span class="bu">PBU</span>Jessie Chen</div>
+    <div class="bar-track"><div class="bar-fill" style="width:2.9%;background:#E8913A"></div></div>
+    <div class="bar-value">435元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">44</div>
+    <div class="bar-name"><span class="bu">LBU</span>李仙瑶</div>
+    <div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#E8913A"></div></div>
+    <div class="bar-value">375元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">45</div>
+    <div class="bar-name"><span class="bu">FBU</span>温家乐</div>
+    <div class="bar-track"><div class="bar-fill" style="width:2.5%;background:#E8913A"></div></div>
+    <div class="bar-value">372元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">46</div>
+    <div class="bar-name"><span class="bu">FBU</span>干财祥</div>
+    <div class="bar-track"><div class="bar-fill" style="width:2.4%;background:#E8913A"></div></div>
+    <div class="bar-value">357元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">47</div>
+    <div class="bar-name"><span class="bu">FBU</span>马骏骁</div>
+    <div class="bar-track"><div class="bar-fill" style="width:2.1%;background:#E8913A"></div></div>
+    <div class="bar-value">315元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">48</div>
+    <div class="bar-name"><span class="bu">GUS</span>刘天慧Tiffany</div>
+    <div class="bar-track"><div class="bar-fill" style="width:2.0%;background:#E8913A"></div></div>
+    <div class="bar-value">308元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">49</div>
+    <div class="bar-name"><span class="bu">LBU</span>刘倩君</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.9%;background:#E8913A"></div></div>
+    <div class="bar-value">285元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">50</div>
+    <div class="bar-name"><span class="bu">FBU</span>Echo Wang</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.8%;background:#E8913A"></div></div>
+    <div class="bar-value">277元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">51</div>
+    <div class="bar-name"><span class="bu">GUS</span>Natalia</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.6%;background:#E8913A"></div></div>
+    <div class="bar-value">237元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">52</div>
+    <div class="bar-name"><span class="bu">GUS</span>王雨妍Rebekah</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">216元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">53</div>
+    <div class="bar-name"><span class="bu">FBU</span>ZHOU JIONGZHANG</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">215元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">54</div>
+    <div class="bar-name"><span class="bu">FBU</span>孙冠懿</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">190元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">55</div>
+    <div class="bar-name"><span class="bu">LBU</span>周雪</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">180元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">56</div>
+    <div class="bar-name"><span class="bu">GUS</span>袁博闻</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">166元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">57</div>
+    <div class="bar-name"><span class="bu">FBU</span>Ying  HUANG</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">149元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">58</div>
+    <div class="bar-name"><span class="bu">GEU</span>傅译萱Zoe</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">149元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">59</div>
+    <div class="bar-name"><span class="bu">LBU</span>廖双</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">144元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">60</div>
+    <div class="bar-name"><span class="bu">FBU</span>候贝贝</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">124元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">61</div>
+    <div class="bar-name"><span class="bu">FBU</span>蓝若铭</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">119元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">62</div>
+    <div class="bar-name"><span class="bu">FBU</span>Fengyi Yang</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">119元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">63</div>
+    <div class="bar-name"><span class="bu">FBU</span>陈哲龙</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">62元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">64</div>
+    <div class="bar-name"><span class="bu">FBU</span>赵剑峰</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">0元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">65</div>
+    <div class="bar-name"><span class="bu">LBU</span>张微</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">0元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">66</div>
+    <div class="bar-name"><span class="bu">PBU</span>Yijie He</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">0元</div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-rank rank-other">67</div>
+    <div class="bar-name"><span class="bu">GEU</span>谭佩伟</div>
+    <div class="bar-track"><div class="bar-fill" style="width:1.5%;background:#E8913A"></div></div>
+    <div class="bar-value">0元</div>
+  </div>
+</div></div>
+
+<div class="footer">
+  <p>招聘效率看板 · 2026Q2 · 数据截至2026年6月</p>
+</div>
+</div>
+</body></html>
